@@ -1,0 +1,48 @@
+import requests
+import csv
+from datetime import datetime
+import os
+import time
+API_KEY = '1ce46afbe4fd66435f9f156b81f5ca53'
+CITIES = ['Delhi', 'Mumbai', 'Chennai', 'Bangalore', 'Kolkata', 'Hyderabad']
+BASE_URL = 'https://api.openweathermap.org/data/2.5/weather'
+
+def fetch_weather(city):
+    params = {
+        'q': city,
+        'appid': API_KEY,
+        'units': 'metric'  
+    }
+    response = requests.get(BASE_URL, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        return {
+            'timestamp': data['dt'],  
+            'temperature': data['main']['temp'],
+            'condition': data['weather'][0]['description']
+        }
+    else:
+        print(f"Error fetching data for {city}: {response.status_code}")
+        return None
+
+weather_records = []
+
+for city in CITIES:
+    record = fetch_weather(city)
+    if record:
+        weather_records.append(record)
+    time.sleep(1)  
+
+def save_to_csv(filename='weather_data.csv'):
+    headers = ['timestamp', 'temperature', 'condition']
+    with open(filename, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(headers)  
+        for record in weather_records:
+            
+            writer.writerow([datetime.fromtimestamp(record['timestamp']).strftime('%Y-%m-%d %H:%M:%S'),
+                             record['temperature'],
+                             record['condition']])
+    print(f"Weather records saved to {filename}. Location: {os.path.abspath(filename)}")
+
+save_to_csv()
